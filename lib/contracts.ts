@@ -2,6 +2,10 @@ import { ethers } from 'ethers';
 
 export const FUND_FACTORY_ADDRESS = '0x9D2C19a267caDA33da70d74aaBF9d2f75D3CdC14';
 
+export const ADDRESS_LIST_REGISTRY = '0x6D0b3882dF46A81D42cCce070ce5E46ea26BAcA5';
+export const ALLOWED_DEPOSIT_RECIPIENTS_POLICY = '0x0eD7E38C4535989e392843884326925B4469EB5A';
+export const ENTRANCE_RATE_DIRECT_FEE = '0xA7259E45c7Be47a5bED94EDc252FADB09769a326';
+
 // Token addresses for Sepolia testnet
 export const TOKEN_ADDRESSES = {
     ASVT: '0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0', // 正確的 ASVT 地址
@@ -74,68 +78,7 @@ export const addressListRegistryABI = [
     "function createList(address creator, uint8 updateType, address[] addresses) external returns (uint256)"
 ]
 
-// export const addressListRegistryABI = [
-//   {
-//     "inputs": [
-//       {
-//         "internalType": "address",
-//         "name": "_owner",
-//         "type": "address"
-//       },
-//       {
-//         "internalType": "enum IAddressListRegistry.UpdateType",
-//         "name": "_updateType",
-//         "type": "uint8"
-//       },
-//       {
-//         "internalType": "address[]",
-//         "name": "_initialItems",
-//         "type": "address[]"
-//       }
-//     ],
-//     "name": "createList",
-//     "outputs": [
-//       {
-//         "internalType": "uint256",
-//         "name": "id_",
-//         "type": "uint256"
-//       }
-//     ],
-//     "stateMutability": "nonpayable",
-//     "type": "function"
-//   },
-//   {
-//     "anonymous": false,
-//     "inputs": [
-//       {
-//         "indexed": true,
-//         "internalType": "address",
-//         "name": "caller",
-//         "type": "address"
-//       },
-//       {
-//         "indexed": false,
-//         "internalType": "address",
-//         "name": "owner",
-//         "type": "address"
-//       },
-//       {
-//         "indexed": false,
-//         "internalType": "uint256",
-//         "name": "id",
-//         "type": "uint256"
-//       },
-//       {
-//         "indexed": false,
-//         "internalType": "enum IAddressListRegistry.UpdateType",
-//         "name": "updateType",
-//         "type": "uint8"
-//       }
-//     ],
-//     "name": "ListCreated",
-//     "type": "event"
-//   }
-// ];
+
 
 // 工具函數：格式化代幣金額顯示
 export const formatTokenAmount = (amount: string | number | undefined, decimals = 18): string => {

@@ -40,6 +40,8 @@ export interface CreateFundParams {
   denominationAsset: string;
   managementFee?: number;
   performanceFee?: number;
+  enableWhitelist?: boolean;
+  whitelist?: string[];
 }
 
 export interface FundMetrics {
