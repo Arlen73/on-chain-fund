@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useWeb3 } from '../lib/web3-context';
 import { ethers } from 'ethers';
-import { DENOMINATION_ASSETS } from '../lib/contracts';
+import { DENOMINATION_ASSETS, COMPTROLLER_ABI, FEE_MANAGER_ABI, POLICY_MANAGER_ABI, MANAGEMENT_FEE_ABI, PERFORMANCE_FEE_ABI } from '../lib/contracts';
 import { formatTokenAmount } from '../lib/contracts';
 import { Chart, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from 'chart.js';
 import { FundService } from '../lib/fund-service';
@@ -60,7 +60,56 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
   const [wethUsdPrice, setWethUsdPrice] = useState<number | null>(null);
   const [wethUsdHisPrice, setWethUsdHisPrice] = useState<{ date: string; price: number }[] | null>([]);
 
+  const [feeDetails, setFeeDetails] = useState<any[]>([]);
+  const [policyDetails, setPolicyDetails] = useState<any[]>([]);
+  const [totalReturn, setTotalReturn] = useState({ amount: '0', percentage: '0' });
+  const [returnTimeframe, setReturnTimeframe] = useState('all');
+
+  // Mock data for the chart
+  const [historicalShareData, setHistoricalShareData] = useState(() => {
+    const data = [];
+    let lastPrice = 1.0;
+    const today = new Date();
+    for (let i = 365; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const timestamp = Math.floor(date.getTime() / 1000);
+      const priceChange = (Math.random() - 0.49) * 0.05;
+      lastPrice += priceChange;
+      data.push({ timestamp, sharePrice: Math.max(0.5, lastPrice) }); // Ensure price doesn't go below 0.5
+    }
+    return data;
+  });
+  const [chartTimeRange, setChartTimeRange] = useState('all');
+
   const [chartType, setChartType] = useState<'sharePrice' | 'gavUsd' | 'wethUsd'>('sharePrice');
+
+  const filteredChartData = useMemo(() => {
+    const now = new Date();
+    let startTime = new Date();
+
+    switch (chartTimeRange) {
+      case '7d':
+        startTime.setDate(now.getDate() - 7);
+        break;
+      case '1m':
+        startTime.setMonth(now.getMonth() - 1);
+        break;
+      case '3m':
+        startTime.setMonth(now.getMonth() - 3);
+        break;
+      case '1y':
+        startTime.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'all':
+      default:
+        return historicalShareData;
+    }
+
+    const startTimeStamp = Math.floor(startTime.getTime() / 1000);
+    return historicalShareData.filter(d => d.timestamp >= startTimeStamp);
+  }, [historicalShareData, chartTimeRange]);
+
 
   // 獲取計價資產
   const denominationAsset = DENOMINATION_ASSETS.find(
@@ -269,6 +318,149 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
     } catch (error) {
       console.error('Error loading user data:', error);
     }
+  };
+
+  useEffect(() => {
+    if (provider && fund?.comptrollerProxy) {
+      loadFeeAndPolicyDetails(fund.comptrollerProxy);
+    }
+  }, [provider, fund]);
+
+  useEffect(() => {
+    if (!fund || fundInvestmentHistory.length === 0) return;
+
+    const calculateReturn = () => {
+      const now = Date.now();
+      let startTime = 0;
+
+      switch (returnTimeframe) {
+        case '1h':
+          startTime = now - 3600 * 1000;
+          break;
+        case '1d':
+          startTime = now - 24 * 3600 * 1000;
+          break;
+        case '1w':
+          startTime = now - 7 * 24 * 3600 * 1000;
+          break;
+        case '1m':
+          startTime = now - 30 * 24 * 3600 * 1000;
+          break;
+        default: // 'all'
+          startTime = 0;
+      }
+
+      // Calculate Current AUM
+      const currentTotalShares = fundInvestmentHistory.reduce((sum, r) => {
+        const shares = parseFloat(r.shares);
+        return r.type === 'deposit' ? sum + shares : sum - shares;
+      }, 0);
+      const currentSharePrice = fund.sharePrice ? parseFloat(fund.sharePrice) : 0;
+      const currentAUM = currentTotalShares * currentSharePrice;
+
+      // Records for the selected period and before
+      const periodRecords = fundInvestmentHistory.filter(r => new Date(r.timestamp).getTime() >= startTime);
+      const beforePeriodRecords = fundInvestmentHistory.filter(r => new Date(r.timestamp).getTime() < startTime);
+
+      // Calculate Net Inflow for the period
+      const periodNetInflow = periodRecords.reduce((sum, r) => {
+        const amount = parseFloat(r.amount);
+        return r.type === 'deposit' ? sum + amount : sum - amount;
+      }, 0);
+
+      let aumStart = 0;
+      let netCapitalInflowForPercentage = 0;
+
+      if (returnTimeframe === 'all') {
+        const totalDeposits = fundInvestmentHistory
+          .filter(r => r.type === 'deposit')
+          .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+        netCapitalInflowForPercentage = totalDeposits; // For ROI, base is total deposits
+        aumStart = 0; // For since inception, starting AUM is 0
+      } else {
+        if (beforePeriodRecords.length > 0) {
+          const startTotalShares = beforePeriodRecords.reduce((sum, r) => {
+            const shares = parseFloat(r.shares);
+            return r.type === 'deposit' ? sum + shares : sum - shares;
+          }, 0);
+          const startSharePrice = parseFloat(beforePeriodRecords[beforePeriodRecords.length - 1].sharePrice);
+          aumStart = startTotalShares * startSharePrice;
+
+          const depositsInPeriod = periodRecords
+            .filter(r => r.type === 'deposit')
+            .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+          netCapitalInflowForPercentage = aumStart + depositsInPeriod;
+
+        } else {
+            // No records before this period, so treat as since inception for this period
+            const depositsInPeriod = periodRecords
+                .filter(r => r.type === 'deposit')
+                .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+            netCapitalInflowForPercentage = depositsInPeriod;
+            aumStart = 0;
+        }
+      }
+
+      const returnAmount = (currentAUM - aumStart) - periodNetInflow;
+      const returnPercentage = netCapitalInflowForPercentage > 0 ? (returnAmount / netCapitalInflowForPercentage) * 100 : 0;
+
+      setTotalReturn({
+        amount: returnAmount.toFixed(4),
+        percentage: returnPercentage.toFixed(2),
+      });
+    };
+
+    calculateReturn();
+  }, [fund, fundInvestmentHistory, returnTimeframe]);
+
+  const loadFeeAndPolicyDetails = async (comptrollerProxy: string) => {
+    if (!provider) return;
+
+    const comptroller = new ethers.Contract(comptrollerProxy, COMPTROLLER_ABI, provider);
+    const feeManagerAddress = await comptroller.getFeeManager();
+    const policyManagerAddress = await comptroller.getPolicyManager();
+
+    const feeManager = new ethers.Contract(feeManagerAddress, FEE_MANAGER_ABI, provider);
+    const policyManager = new ethers.Contract(policyManagerAddress, POLICY_MANAGER_ABI, provider);
+
+    const enabledFees = await feeManager.getEnabledFeesForFund(comptrollerProxy);
+    const enabledPolicies = await policyManager.getEnabledPoliciesForFund(comptrollerProxy);
+
+    const feePromises = enabledFees.map(async (feeAddress: string) => {
+      let feeInfo = { name: 'Unknown Fee', address: feeAddress, value: 'N/A' };
+      try {
+        if (feeAddress.toLowerCase() === '0x5c25D5d0C2cad652992bA417f8FA054F8930Ef99'.toLowerCase()) {
+          const feeContract = new ethers.Contract(feeAddress, MANAGEMENT_FEE_ABI, provider);
+          const rate = await feeContract.managementFeeRate();
+          feeInfo.name = 'Management Fee';
+          feeInfo.value = `${ethers.formatUnits(rate, 16)}% p.a.`; // rate is typically 1e16 for 1%
+        } else if (feeAddress.toLowerCase() === '0x82EDeB07c051D6461acD30c39b5762D9523CEf1C'.toLowerCase()) {
+          const feeContract = new ethers.Contract(feeAddress, PERFORMANCE_FEE_ABI, provider);
+          const rateBps = await feeContract.performanceFeeRateInBps();
+          feeInfo.name = 'Performance Fee';
+          feeInfo.value = `${Number(rateBps) / 100}%`; // rate is in basis points (1% = 100bps)
+        }
+      } catch (e) {
+        console.error(`Error fetching details for fee ${feeAddress}:`, e);
+      }
+      return feeInfo;
+    });
+
+    const policyPromises = enabledPolicies.map(async (policyAddress: string) => {
+      let policyInfo = { name: 'Unknown Policy', address: policyAddress, value: 'Enabled' };
+      try {
+        if (policyAddress.toLowerCase() === '0x0eD7E38C4535989e392843884326925B4469EB5A'.toLowerCase()) {
+          policyInfo.name = 'Investor Whitelist';
+          // Further logic to get list ID and members can be added here
+        }
+      } catch (e) {
+        console.error(`Error fetching details for policy ${policyAddress}:`, e);
+      }
+      return policyInfo;
+    });
+
+    setFeeDetails(await Promise.all(feePromises));
+    setPolicyDetails(await Promise.all(policyPromises));
   };
 
   const handleDeposit = async () => {
@@ -500,6 +692,19 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
           <p className="text-gray-600 mt-2">基金管理 - {fund.fundSymbol}</p>
         </div>
 
+        <div className="mb-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-600">收益時間範圍:</span>
+            <div>
+              <button onClick={() => setReturnTimeframe('all')} className={`px-3 py-1 text-sm rounded-md ${returnTimeframe === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}>全部</button>
+              <button onClick={() => setReturnTimeframe('1m')} className={`ml-2 px-3 py-1 text-sm rounded-md ${returnTimeframe === '1m' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}>月</button>
+              <button onClick={() => setReturnTimeframe('1w')} className={`ml-2 px-3 py-1 text-sm rounded-md ${returnTimeframe === '1w' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}>週</button>
+              <button onClick={() => setReturnTimeframe('1d')} className={`ml-2 px-3 py-1 text-sm rounded-md ${returnTimeframe === '1d' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}>日</button>
+              <button onClick={() => setReturnTimeframe('1h')} className={`ml-2 px-3 py-1 text-sm rounded-md ${returnTimeframe === '1h' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'}`}>時</button>
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left: Fund Overview and Assets */}
           <div className="lg:col-span-2 space-y-6">
@@ -535,6 +740,13 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                     {totalAssetsUSD !== null ? `$${totalAssetsUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '--'}
                   </p>
                   <p className="text-sm text-gray-600">WETH/USD</p>
+                </div>
+
+                <div className="text-center">
+                  <p className={`text-2xl font-bold ${parseFloat(totalReturn.amount) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                    {totalReturn.amount}
+                  </p>
+                  <p className="text-sm text-gray-600">總收益 ({totalReturn.percentage}%)</p>
                 </div>
 
                 {/* <div className="text-center">
@@ -592,56 +804,19 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                 ))}
               </div>
             </div> */}
-            <div className="flex gap-2 mb-4">
-              <button
-                className={`px-4 py-2 rounded ${chartType === 'sharePrice' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                onClick={() => setChartType('sharePrice')}
-              >份額價格走勢</button>
-              <button
-                className={`px-4 py-2 rounded ${chartType === 'gavUsd' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                onClick={() => setChartType('gavUsd')}
-              >AUM 美元化走勢</button>
-              <button
-                className={`px-4 py-2 rounded ${chartType === 'wethUsd' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                onClick={() => setChartType('wethUsd')}
-              >WETH/USD 價格走勢</button>
+            <div className="card">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">歷史份額淨值</h2>
+                <div className="flex items-center space-x-1 rounded-lg bg-gray-100 p-1">
+                  <button onClick={() => setChartTimeRange('7d')} className={`px-3 py-1 text-sm font-medium rounded-md ${chartTimeRange === '7d' ? 'bg-white shadow text-primary-600' : 'text-gray-600'}`}>7D</button>
+                  <button onClick={() => setChartTimeRange('1m')} className={`px-3 py-1 text-sm font-medium rounded-md ${chartTimeRange === '1m' ? 'bg-white shadow text-primary-600' : 'text-gray-600'}`}>1M</button>
+                  <button onClick={() => setChartTimeRange('3m')} className={`px-3 py-1 text-sm font-medium rounded-md ${chartTimeRange === '3m' ? 'bg-white shadow text-primary-600' : 'text-gray-600'}`}>3M</button>
+                  <button onClick={() => setChartTimeRange('1y')} className={`px-3 py-1 text-sm font-medium rounded-md ${chartTimeRange === '1y' ? 'bg-white shadow text-primary-600' : 'text-gray-600'}`}>1Y</button>
+                  <button onClick={() => setChartTimeRange('all')} className={`px-3 py-1 text-sm font-medium rounded-md ${chartTimeRange === 'all' ? 'bg-white shadow text-primary-600' : 'text-gray-600'}`}>All</button>
+                </div>
+              </div>
+              <FundLineChart chartData={filteredChartData} title="Share Price Over Time" />
             </div>
-
-            {chartType === 'sharePrice' && (
-              <FundLineChart
-                title="基金歷史份額價格走勢"
-                labels={[
-                  ...historicalPrices.map(p => p.blockNumber),
-                  realtimePrice !== null ? '即時' : null
-                ].filter(Boolean)}
-                data={[
-                  ...historicalPrices.map(p => p.sharePrice),
-                  ...(realtimePrice !== null ? [realtimePrice] : [])
-                ]}
-                color="rgba(54, 162, 235, 1)"
-                yLabel="份額價格"
-              />
-            )}
-
-            {chartType === 'gavUsd' && (
-              <FundLineChart
-                title="基金總資產 (AUM, USD) 走勢"
-                labels={aumUsdHistory.map(a => a.date)}
-                data={aumUsdHistory.map(a => a.value)}
-                color="rgba(255, 99, 132, 1)"
-                yLabel="AUM (USD)"
-              />
-            )}
-
-            {chartType === 'wethUsd' && (
-              <FundLineChart
-                title="WETH/USD 價格走勢"
-                labels={(wethUsdHisPrice ?? []).map(p => p.date)}
-                data={(wethUsdHisPrice ?? []).map(p => p.price)}
-                color="rgba(75, 192, 192, 1)"
-                yLabel="WETH/USD"
-              />
-            )}
 
             {/* Fund Investment History */}
             <div className="card">
@@ -840,14 +1015,18 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               <h3 className="text-lg font-bold text-gray-900 mb-4">基金設定</h3>
               
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">管理費</span>
-                  <span className="font-medium">{fund.managementFee}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">績效費</span>
-                  <span className="font-medium">{fund.performanceFee}%</span>
-                </div>
+                {feeDetails.map(fee => (
+                  <div key={fee.address} className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">{fee.name}</span>
+                    <span className="font-medium">{fee.value}</span>
+                  </div>
+                ))}
+                {policyDetails.map(policy => (
+                  <div key={policy.address} className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">{policy.name}</span>
+                    <span className="font-medium text-success-600">{policy.value}</span>
+                  </div>
+                ))}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">計價資產</span>
                   <span className="font-medium">{denominationAsset.symbol}</span>

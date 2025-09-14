@@ -1,57 +1,111 @@
+'use client';
+
 import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale,
+} from 'chart.js';
+import 'chart.js/auto'; // Using auto registration
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale
+);
 
 interface FundLineChartProps {
+  chartData: { timestamp: number; sharePrice: number }[];
   title: string;
-  labels: (string | number | null)[];
-  data: number[];
-  color?: string;
-  height?: number;
-  yLabel?: string;
 }
 
-export default function FundLineChart({
-  title,
-  labels,
-  data,
-  color = 'rgba(54, 162, 235, 1)',
-  height = 220,
-  yLabel = '數值'
-}: FundLineChartProps) {
-  const chartData = {
-    labels,
+const FundLineChart = ({ chartData, title }: FundLineChartProps) => {
+  const data = {
+    labels: chartData.map(d => new Date(d.timestamp * 1000).toLocaleDateString()),
     datasets: [
       {
-        label: title,
-        data,
-        borderColor: color,
-        backgroundColor: color.replace('1)', '0.2)'),
-        tension: 0.2,
-        pointRadius: 0,
+        label: 'Share Price',
+        data: chartData.map(d => d.sharePrice),
+        borderColor: '#4F46E5',
+        backgroundColor: 'rgba(79, 70, 229, 0.2)',
         fill: true,
-      }
-    ]
+        tension: 0.4,
+        pointRadius: 0, // Hide points
+        pointHoverRadius: 5, // Show on hover
+      },
+    ],
   };
 
-  const chartOptions = {
+  const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
-      tooltip: { mode: "index" as const, intersect: false }
+      legend: {
+        display: false, // We can hide the legend if there's only one dataset
+      },
+      title: {
+        display: true,
+        text: title,
+        font: {
+          size: 18,
+        },
+      },
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        callbacks: {
+          label: function (context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+            }
+            return label;
+          },
+        },
+      },
     },
     scales: {
-      x: { title: { display: true, text: '區塊高度' } },
-      y: { title: { display: true, text: yLabel } }
-    }
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        grid: {
+          color: '#E5E7EB',
+        },
+        ticks: {
+          callback: function (value: any) {
+            return '$' + value.toFixed(2);
+          },
+        },
+      },
+    },
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
   };
 
   return (
-    <div className="card mt-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">{title}</h2>
-      {data.length > 0 ? (
-        <Line data={chartData} options={chartOptions} height={height} />
-      ) : (
-        <div className="text-gray-500 text-center py-8">暫無資料</div>
-      )}
+    <div className="card h-96">
+      <Line options={options} data={data} />
     </div>
   );
-}
+};
+
+export default FundLineChart;

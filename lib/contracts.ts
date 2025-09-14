@@ -53,11 +53,33 @@ export const VAULT_PROXY_ABI = [
 ];
 
 export const COMPTROLLER_ABI = [
+    'function getFeeManager() view returns (address)',
+    'function getPolicyManager() view returns (address)',
     'function calcGav() view returns (uint256)',
     'function calcGrossShareValue() view returns (uint256)',
     'function buyShares(uint256 investmentAmount, uint256 minSharesQuantity)',
     'function getDenominationAsset() view returns (address)',
     'function redeemSharesInKind(address receiver, uint256 shareQuantity, address[] assetsToRedeem, address[] assetReceivers)'
+];
+
+export const FEE_MANAGER_ABI = [
+    'function getEnabledFeesForFund(address comptrollerProxy) view returns (address[])'
+];
+
+export const POLICY_MANAGER_ABI = [
+    'function getEnabledPoliciesForFund(address comptrollerProxy) view returns (address[])'
+];
+
+export const MANAGEMENT_FEE_ABI = [
+    'function managementFeeRate() view returns (uint256)'
+];
+
+export const PERFORMANCE_FEE_ABI = [
+    'function performanceFeeRateInBps() view returns (uint256)'
+];
+
+export const ALLOWED_DEPOSIT_RECIPIENTS_POLICY_ABI = [
+    'function getListIdsForFund(address comptrollerProxy) view returns (uint256[])'
 ];
 
 export const ERC20_ABI = [

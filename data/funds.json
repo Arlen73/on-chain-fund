@@ -166,6 +166,51 @@
       "createdAt": "2025-08-30T12:59:41.847Z",
       "updatedAt": "2025-08-30T12:59:41.847Z",
       "status": "active"
+    },
+    {
+      "fundName": "ADA",
+      "fundSymbol": "CARDANO",
+      "vaultProxy": "0x0bEf36E50ADD1f1c547Fa838D1d103167Cfcca61",
+      "comptrollerProxy": "0x7E1062C95d01F2Acd18cA1813765eeE741Fde56b",
+      "denominationAsset": "0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0xd4cc490369c1aa77046aa5be1922e84581ef437c",
+      "txHash": "0xb0080119efac84e817ffd4292083be6ad3bea22a024fa12ab5046c884536b27d",
+      "id": "13",
+      "createdAt": "2025-09-14T06:32:54.940Z",
+      "updatedAt": "2025-09-14T06:32:54.940Z",
+      "status": "active"
+    },
+    {
+      "fundName": "Cardano",
+      "fundSymbol": "ADA",
+      "vaultProxy": "0x2BF0D56bB34CDf92453cB70cc37a7616A0cbF259",
+      "comptrollerProxy": "0x0539c03bDf21BAFeCED1cd966fb442b37a3f4267",
+      "denominationAsset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0xd4cc490369c1aa77046aa5be1922e84581ef437c",
+      "txHash": "0xe34c1e1e0818e3ca52b10b6157f3629cbe57fd8f94e8d3075522ce780f948fcd",
+      "id": "14",
+      "createdAt": "2025-09-14T06:58:40.455Z",
+      "updatedAt": "2025-09-14T06:58:40.455Z",
+      "status": "active"
+    },
+    {
+      "fundName": "Test",
+      "fundSymbol": "ADA2",
+      "vaultProxy": "0x64De193F1C9A48F3447376d4d86f0e09426bE2d2",
+      "comptrollerProxy": "0x8C0AAA8AfB80F3fEC2Cc5e64416Cd24687195a75",
+      "denominationAsset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0xd4cc490369c1aa77046aa5be1922e84581ef437c",
+      "txHash": "0xf7e62d083b0e3606b1c0a0e9a4b540e97fd03e3244f0914d0373056966870273",
+      "id": "15",
+      "createdAt": "2025-09-14T08:19:04.807Z",
+      "updatedAt": "2025-09-14T08:19:04.807Z",
+      "status": "active"
     }
   ],
   "investments": [
@@ -714,8 +759,36 @@
       "txHash": "0x591d4b285dda90b0240762aef06b84878b98ec98e3307e854fdf85196028f438",
       "timestamp": "2025-09-01T15:43:30.407Z",
       "status": "completed"
+    },
+    {
+      "id": "41",
+      "fundId": "15",
+      "fundName": "Test",
+      "fundSymbol": "ADA2",
+      "investorAddress": "0xd4cc490369c1aa77046aa5be1922e84581ef437c",
+      "type": "deposit",
+      "amount": "2",
+      "shares": "2000000000000",
+      "sharePrice": "0.000000000001",
+      "txHash": "0x22a258594d87850ad824f85fe372345654b71013ff0009c00fcc0d6ef0b707c4",
+      "timestamp": "2025-09-14T08:20:20.030Z",
+      "status": "completed"
+    },
+    {
+      "id": "42",
+      "fundId": "15",
+      "fundName": "Test",
+      "fundSymbol": "ADA2",
+      "investorAddress": "0xd4cc490369c1aa77046aa5be1922e84581ef437c",
+      "type": "redeem",
+      "amount": "1e-12",
+      "shares": "1",
+      "sharePrice": "0.000000000001",
+      "txHash": "0xc81fefdf1ff0ef06cc792a0b1f99bc06a20d3e0df50f1a861656a2d465f2c140",
+      "timestamp": "2025-09-14T08:23:16.360Z",
+      "status": "completed"
     }
   ],
-  "lastFundId": 12,
-  "lastInvestmentId": 40
+  "lastFundId": 15,
+  "lastInvestmentId": 42
 }
