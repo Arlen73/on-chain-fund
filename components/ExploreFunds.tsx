@@ -334,14 +334,6 @@ export default function ExploreFunds() {
 
                 <div className="mb-4 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">管理費:</span>
-                    <span className="font-medium">{(fund.managementFee / 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">績效費:</span>
-                    <span className="font-medium">{(fund.performanceFee / 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-gray-600">計價資產:</span>
                     <span className="font-medium">{denominationAsset.icon} {denominationAsset.symbol}</span>
                   </div>

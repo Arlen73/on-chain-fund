@@ -1,5 +1,31 @@
 'use client';
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+// Register once for the whole app (fixes "category is not a registered scale")
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { Web3Provider } from '../lib/web3-context';
 import { NotificationProvider, NotificationContainer } from '../components/ui/NotificationSystem';

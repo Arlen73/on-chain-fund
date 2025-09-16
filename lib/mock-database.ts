@@ -9,8 +9,6 @@ interface FundData {
   vaultProxy: string;
   comptrollerProxy: string;
   denominationAsset: string;
-  managementFee: number;
-  performanceFee: number;
   creator: string;
   txHash: string;
   createdAt: string;

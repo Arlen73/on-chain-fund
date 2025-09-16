@@ -31,8 +31,6 @@ async function testExploreFunds() {
       console.log(`  管理者: ${fund.creator}`);
       console.log(`  Vault 地址: ${fund.vaultProxy}`);
       console.log(`  計價資產: ${fund.denominationAsset}`);
-      console.log(`  管理費: ${fund.managementFee} bps (${(fund.managementFee / 100).toFixed(1)}%)`);
-      console.log(`  績效費: ${fund.performanceFee} bps (${(fund.performanceFee / 100).toFixed(1)}%)`);
       console.log(`  總資產: ${fund.totalAssets || 'N/A'}`);
       console.log(`  份額價格: $${fund.sharePrice || 'N/A'}`);
       console.log(`  狀態: ${fund.status}`);

@@ -17,8 +17,6 @@ async function setupTestData() {
         vaultProxy: '0x1111111111111111111111111111111111111111',
         comptrollerProxy: '0x2222222222222222222222222222222222222222',
         denominationAsset: '0xA0b86a33E6441f8C8c36e42a1c8E8c42D1E8eDD8',
-        managementFee: 2,
-        performanceFee: 10,
         creator: '0xtest123456789',
         txHash: '0xhash1'
       },
@@ -28,8 +26,6 @@ async function setupTestData() {
         vaultProxy: '0x3333333333333333333333333333333333333333',
         comptrollerProxy: '0x4444444444444444444444444444444444444444',
         denominationAsset: '0xA0b86a33E6441f8C8c36e42a1c8E8c42D1E8eDD8',
-        managementFee: 2.5,
-        performanceFee: 15,
         creator: '0xtest123456789',
         txHash: '0xhash2'
       },
@@ -39,8 +35,6 @@ async function setupTestData() {
         vaultProxy: '0x5555555555555555555555555555555555555555',
         comptrollerProxy: '0x6666666666666666666666666666666666666666',
         denominationAsset: '0xA0b86a33E6441f8C8c36e42a1c8E8c42D1E8eDD8',
-        managementFee: 1.5,
-        performanceFee: 20,
         creator: '0xother987654321',
         txHash: '0xhash3'
       }
