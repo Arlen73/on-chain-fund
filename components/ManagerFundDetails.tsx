@@ -12,6 +12,7 @@ import { getHistoricalSharePrices, getRealtimeSharePrice, getVaultGAV } from '@/
 import { Line } from 'react-chartjs-2';
 import { SEPOLIA_MAINNET_RPC } from '@/lib/constant';
 import FundLineChart from './FundLineChart';
+import UniswapPanel from './UniswapPanel';
 
 interface ManagerFundDetailsProps {
   fundId: string;
@@ -42,6 +43,15 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
   const [tradeAsset, setTradeAsset] = useState('ETH');
   const [tradeType, setTradeType] = useState('buy'); // 'buy' or 'sell'
   const [isTrading, setIsTrading] = useState(false);
+
+  // Portfolio states - 改為動態獲取
+  const [portfolioAssets, setPortfolioAssets] = useState<{
+    symbol: string;
+    address: string;
+    balance: string;
+    percentage: number;
+    decimals: number;
+  }[]>([]);
 
   const [historicalPrices, setHistoricalPrices] = useState<{ blockNumber: number, sharePrice: number }[]>(
     [
@@ -81,22 +91,23 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
   //   loadHistory();
   // }, [fund]);
 
-  useEffect(() => {
-    const loadRealtime = async () => {
-      if (fund?.vaultProxy) {
-        try {
-          const price = await getRealtimeSharePrice(fund.vaultProxy, denominationAsset.decimals);
 
-          setRealtimePrice(Number(price));
-        } catch (e) {
-          console.warn('即時價格查詢失敗', e);
-        }
-      }
-    };
-    loadRealtime();
-  }, [fund]);
+  // useEffect(() => {
+  //   const loadRealtime = async () => {
+  //     if (fund?.vaultProxy) {
+  //       try {
+  //         const price = await getRealtimeSharePrice(fund.vaultProxy, denominationAsset.decimals);
+  //         console.log("Realtime Share Price:", price);
+  //         setRealtimePrice(Number(price));
+  //       } catch (e) {
+  //         console.warn('即時價格查詢失敗', e);
+  //       }
+  //     }
+  //   };
+  //   loadRealtime();
+  // }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const loadGavHistory = async () => {
       if (fund?.vaultProxy && historicalPrices.length > 0) {
         try {
@@ -172,45 +183,117 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
       }
     };
     loadWethHistoricalPrice();
-  }, []);
+  }, []);*/
 
-  // 載入基金資料
+  // 載入基金資料 - 只有在連接錢包且有地址時才載入
   useEffect(() => {
-    loadFundFromDatabase();
-  }, [fundId]);
+    if (isConnected && address) {
+      loadFundFromDatabase();
+    } else {
+      // 如果沒有連接錢包，停止載入狀態
+      setIsLoading(false);
+    }
+  }, [fundId, isConnected, address]);
 
   // 當基金資料載入且用戶連接錢包時，載入用戶資料
   useEffect(() => {
     if (isConnected && address && provider && fund) {
+      console.log('📄 Triggering loadUserData from useEffect...');
       loadUserData();
+    } else {
+      console.log('🚫 loadUserData not triggered:', { isConnected, address: !!address, provider: !!provider, fund: !!fund });
     }
   }, [isConnected, address, provider, fund]);
 
+  // 新增：在基金載入後直接載入資產組合（不依賴區塊鏈資料）
+  useEffect(() => {
+    if (fund && provider) {
+      console.log('🔄 Directly loading portfolio assets after fund is loaded...');
+      loadPortfolioAssets();
+    }
+  }, [fund, provider]);
+
   const loadFundFromDatabase = async () => {
+    if (!address) {
+      console.warn('Cannot load fund: No wallet address');
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
     setFundNotFound(false);
+    
     try {
-      console.log('Loading fund with ID:', fundId);
+      console.log('Loading fund with ID:', fundId, 'for address:', address);
+      
+      // 先獲取所有基金，然後看看是否有這個 ID
+      const allFunds = await fundDatabaseService.getAllFunds();
+      console.log('All funds in database:', allFunds.length);
       
       // 從資料庫載入基金資料
-      const fundsList = await fundDatabaseService.getFundsByCreator(address || '');
+      const fundsList = await fundDatabaseService.getFundsByCreator(address);
+      console.log('Funds list from database for address', address, ':', fundsList);
       const foundFund = fundsList.find(f => f.id === fundId);
+      
+      // 詳細的地址比較調試
+      console.log('=== Address Comparison Debug ===');
+      console.log('Current wallet address:', address);
+      console.log('Current wallet address (lowercase):', address.toLowerCase());
+      console.log('Looking for fund ID:', fundId);
+      
+      if (fundsList.length > 0) {
+        console.log('User\'s funds:');
+        fundsList.forEach(fund => {
+          console.log(`- Fund ${fund.id}: ${fund.fundName}, creator: ${fund.creator}, creator(lowercase): ${fund.creator.toLowerCase()}`);
+        });
+      } else {
+        console.log('No funds found for this user');
+        // 檢查所有基金的創建者
+        console.log('All funds creators:');
+        allFunds.forEach(fund => {
+          console.log(`- Fund ${fund.id}: creator: ${fund.creator}, matches current: ${fund.creator.toLowerCase() === address.toLowerCase()}`);
+        });
+      }
+      
+      // 如果沒有找到，檢查是否在所有基金中存在
+      if (!foundFund) {
+        const anyFund = allFunds.find(f => f.id === fundId);
+        if (anyFund) {
+          console.warn('Fund exists but not owned by current address. Fund creator:', anyFund.creator, 'Current address:', address);
+          setFundNotFound(true);
+          setFund(null);
+          setIsLoading(false); // 明確設置載入狀態為 false
+          return;
+        }
+      }
       
       if (!foundFund) {
         console.warn('Fund not found in database');
         setFundNotFound(true);
         setFund(null);
+        setIsLoading(false); // 明確設置載入狀態為 false
         return;
       }
 
       setFund(foundFund);
       console.log('Loaded fund from database:', foundFund);
+      console.log('Setting isLoading to false...');
+      setIsLoading(false); // 在這裡先設置為 false
       
       // 如果有區塊鏈連接，嘗試載入區塊鏈資料
       if (provider && foundFund.vaultProxy && foundFund.comptrollerProxy) {
         try {
+          console.log('Loading blockchain data...');
+          
+          // 添加超時機制
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Blockchain data loading timeout')), 10000)
+          );
+          
           const fundService = new FundService(provider);
-          const realFundData = await fundService.getFundDetails(foundFund.vaultProxy, foundFund.comptrollerProxy);
+          const blockchainPromise = fundService.getFundDetails(foundFund.vaultProxy, foundFund.comptrollerProxy);
+          
+          const realFundData = await Promise.race([blockchainPromise, timeoutPromise]);
           
           console.log('Loaded fund data from blockchain:', realFundData);
           // 更新基金資料，結合資料庫和區塊鏈資料
@@ -225,6 +308,8 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
           console.log('Updated with blockchain data:', realFundData);
         } catch (error) {
           console.warn('Failed to load blockchain data:', error);
+          // 即使區塊鏈資料載入失敗，也要繼續顯示基金資訊
+          console.log('Continuing with database data only');
         }
       }
     } catch (error) {
@@ -236,7 +321,12 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
   };
 
   const loadUserData = async () => {
-    if (!provider || !address || !fund) return;
+    if (!provider || !address || !fund) {
+      console.warn('loadUserData: Missing dependencies:', { provider: !!provider, address: !!address, fund: !!fund });
+      return;
+    }
+    
+    console.log('📄 開始載入用戶資料...');
     
     try {
       const fundService = new FundService(provider);
@@ -244,10 +334,16 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
       // Get user's denomination asset balance
       const balance = await fundService.getTokenBalance(fund.denominationAsset, address);
       setUserBalance(balance);
+      console.log('💰 User balance loaded:', balance);
       
       // Get user's fund shares
       const shares = await fundService.getUserBalance(fund.vaultProxy, address);
       setUserShares(shares);
+      console.log('📊 User shares loaded:', shares);
+
+      // 載入基金的代幣持倉
+      console.log('🔄 即將載入資產組合...');
+      await loadPortfolioAssets();
 
       // 載入投資記錄和總結
       try {
@@ -268,6 +364,114 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
       
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  // 載入基金資產組合
+  const loadPortfolioAssets = async () => {
+    if (!provider || !fund) {
+      console.warn('loadPortfolioAssets: Missing provider or fund:', { provider: !!provider, fund: !!fund });
+      return;
+    }
+    
+    console.log('🔍 開始載入基金資產組合...');
+    console.log('Fund info:', {
+      id: fund.id,
+      name: fund.fundName,
+      vaultProxy: fund.vaultProxy,
+      denominationAsset: fund.denominationAsset
+    });
+    
+    try {
+      const tokenAddresses = {
+        ASVT: '0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0',
+        WETH: '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14',
+        USDC: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+      };
+      
+      console.log('Token addresses to check:', tokenAddresses);
+      
+      const tokenInfos = [
+        { symbol: 'ASVT', address: tokenAddresses.ASVT, decimals: 18 },
+        { symbol: 'WETH', address: tokenAddresses.WETH, decimals: 18 },
+        { symbol: 'USDC', address: tokenAddresses.USDC, decimals: 6 }
+      ];
+      
+      const assets = [];
+      let totalValue = 0;
+      
+      // 獲取每個代幣的餘額
+      for (const tokenInfo of tokenInfos) {
+        try {
+          console.log(`📊 檢查 ${tokenInfo.symbol} 餘額...`);
+          console.log(`Contract address: ${tokenInfo.address}`);
+          console.log(`Vault address: ${fund.vaultProxy}`);
+          
+          const contract = new ethers.Contract(
+            tokenInfo.address,
+            ['function balanceOf(address) view returns (uint256)'],
+            provider
+          );
+          
+          console.log(`🔍 正在調用 ${tokenInfo.symbol}.balanceOf(${fund.vaultProxy})...`);
+          
+          const balance = await contract.balanceOf(fund.vaultProxy);
+          const balanceFormatted = ethers.formatUnits(balance, tokenInfo.decimals);
+          const balanceNum = parseFloat(balanceFormatted);
+          
+          console.log(`${tokenInfo.symbol} 原始餘額:`, balance.toString());
+          console.log(`${tokenInfo.symbol} 格式化餘額:`, balanceFormatted);
+          console.log(`${tokenInfo.symbol} 數值:`, balanceNum);
+          
+          if (balanceNum > 0) {
+            // 這裡可以加入價格轉換，暫時使用簡單的假設
+            let value = balanceNum;
+            if (tokenInfo.symbol === 'WETH') {
+              value = balanceNum * (wethUsdPrice || 1840); // 使用 WETH 價格
+            } else if (tokenInfo.symbol === 'ASVT') {
+              value = balanceNum * 0.001; // 假設 ASVT 價格
+            }
+            
+            totalValue += value;
+            
+            console.log(`✅ ${tokenInfo.symbol} 有餘額! 數量: ${balanceNum}, 價值: ${value}`);
+            
+            assets.push({
+              symbol: tokenInfo.symbol,
+              address: tokenInfo.address,
+              balance: balanceFormatted,
+              percentage: 0, // 稍後計算
+              decimals: tokenInfo.decimals,
+              value: value
+            });
+          } else {
+            console.log(`❌ ${tokenInfo.symbol} 餘額為 0`);
+          }
+        } catch (error) {
+          console.error(`❗ Failed to get balance for ${tokenInfo.symbol}:`, error);
+          console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            data: error.data
+          });
+        }
+      }
+      
+      console.log('📈 總資產數組:', assets);
+      console.log('💰 總價值:', totalValue);
+      
+      // 計算百分比
+      const assetsWithPercentage = assets.map(asset => ({
+        ...asset,
+        percentage: totalValue > 0 ? (asset.value / totalValue) * 100 : 0
+      }));
+      
+      setPortfolioAssets(assetsWithPercentage);
+      console.log('✅ Portfolio assets loaded successfully:', assetsWithPercentage);
+      
+    } catch (error) {
+      console.error('❌ Error loading portfolio assets:', error);
+      console.error('Error stack:', error.stack);
     }
   };
 
@@ -337,21 +541,21 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
     }
   };
 
-  async function settlePerformanceFee(comptrollerProxyAddress: string, signer: any) {
-    const performanceFeeAbi = [
-      "function settle(address _comptrollerProxy) external"
-    ];
-    const performanceFee = new ethers.Contract("0x82EDeB07c051D6461acD30c39b5762D9523CEf1C", performanceFeeAbi, signer);
-    try {
-      const tx = await performanceFee.settle(comptrollerProxyAddress);
-      await tx.wait();
-      console.log(`Performance fee settled for ${comptrollerProxyAddress}, tx: ${tx.hash}`);
-      return tx.hash;
-    } catch (error: any) {
-      console.error("Settle performance fee failed:", error);
-      throw error;
-    }
-  }
+  // async function settlePerformanceFee(comptrollerProxyAddress: string, signer: any) {
+  //   const performanceFeeAbi = [
+  //     "function settle(address _comptrollerProxy) external"
+  //   ];
+  //   const performanceFee = new ethers.Contract("0x82EDeB07c051D6461acD30c39b5762D9523CEf1C", performanceFeeAbi, signer);
+  //   try {
+  //     const tx = await performanceFee.settle(comptrollerProxyAddress);
+  //     await tx.wait();
+  //     console.log(`Performance fee settled for ${comptrollerProxyAddress}, tx: ${tx.hash}`);
+  //     return tx.hash;
+  //   } catch (error: any) {
+  //     console.error("Settle performance fee failed:", error);
+  //     throw error;
+  //   }
+  // }
 
   const handleRedeem = async () => {
     if (!provider || !address || !redeemAmount || !fund) return;
@@ -430,6 +634,9 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
           <h2 className="text-2xl font-bold text-gray-900 mb-4">需要連接錢包</h2>
           <p className="text-gray-600 mb-6">請先連接您的錢包以管理基金</p>
           <div className="text-4xl mb-4">🔗</div>
+          <a href="/manager" className="btn-primary">
+            返回管理儀表板
+          </a>
         </div>
       </div>
     );
@@ -452,11 +659,18 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="card max-w-md w-full text-center">
           <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">基金不存在</h2>
-          <p className="text-gray-600 mb-6">找不到指定的基金，請確認基金 ID 是否正確</p>
-          <a href="/manager/dashboard" className="btn-primary">
-            返回儀表板
-          </a>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">無法訪問基金</h2>
+          <p className="text-gray-600 mb-6">
+            找不到指定的基金，或您沒有權限管理此基金。<br/>
+            請確認您是否為此基金的創建者。
+          </p>
+          <div className="space-y-2">
+            <a href="/manager" className="btn-primary block">
+              返回管理儀表板
+            </a>
+            <p className="text-xs text-gray-500">基金 ID: {fundId}</p>
+            <p className="text-xs text-gray-500">當前地址: {address}</p>
+          </div>
         </div>
       </div>
     );
@@ -511,7 +725,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900">
                     {totalAssets > 0
-                      ? `$${totalAssets.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                      ? `${totalAssets.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                       : '--'}
                   </p>
                   <p className="text-sm text-gray-600">總資產 (AUM)</p>
@@ -519,23 +733,23 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900">
                     {latestSharePrice > 0
-                      ? `$${latestSharePrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}`
+                      ? `${latestSharePrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}`
                       : '--'}
                   </p>
                   <p className="text-sm text-gray-600">份額淨值</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900">
-                    {totalAssets.toLocaleString(undefined, { maximumFractionDigits: 4 })} WETH
+                    {totalAssets.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                   </p>
                   <p className="text-sm text-gray-600">已發行份額</p>
                 </div>
-                <div className="text-center">
+                {/* <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900">
-                    {totalAssetsUSD !== null ? `$${totalAssetsUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '--'}
+                    {totalAssetsUSD !== null ? `${totalAssetsUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '--'}
                   </p>
                   <p className="text-sm text-gray-600">WETH/USD</p>
-                </div>
+                </div> */}
 
                 {/* <div className="text-center">
                   <p className="text-2xl font-bold text-gray-900">{fund.totalInvestors || 0}</p>
@@ -559,6 +773,60 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                   </div>
                 </div>
               </div> */}
+            </div>
+
+            {/* Portfolio Holdings */}
+            <div className="card">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">資產組合 (Token Holdings)</h2>
+              
+              <div className="space-y-4">
+                {portfolioAssets.length > 0 ? portfolioAssets.map((asset, index) => {
+                  const balanceValue = parseFloat(asset.balance);
+                  const totalValue = asset.value || 0;
+                  
+                  return (
+                    <div key={asset.symbol} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                          <span className="text-primary-600 font-bold text-sm">{asset.symbol.substring(0, 2)}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{asset.symbol}</p>
+                          <p className="text-sm text-gray-600">{asset.percentage.toFixed(1)}% 配置</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-gray-900">
+                          {balanceValue.toLocaleString(undefined, { maximumFractionDigits: asset.decimals === 6 ? 2 : 6 })} {asset.symbol}
+                        </p>
+                        {totalValue > 0 && (
+                          <p className="text-sm text-gray-600">
+                            ≈ ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">💼</div>
+                    <p>暫無資產持倉</p>
+                    <p className="text-sm mt-1">使用 Uniswap 進行交易後資產會顯示在這裡</p>
+                  </div>
+                )}
+                
+                {/* 重新整理按鈕 */}
+                {portfolioAssets.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <button
+                      onClick={loadPortfolioAssets}
+                      className="w-full py-2 px-4 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                    >
+                      🔄 重新整理資產組合
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Asset Allocation */}
@@ -592,7 +860,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                 ))}
               </div>
             </div> */}
-            <div className="flex gap-2 mb-4">
+            {/* <div className="flex gap-2 mb-4">
               <button
                 className={`px-4 py-2 rounded ${chartType === 'sharePrice' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'}`}
                 onClick={() => setChartType('sharePrice')}
@@ -641,7 +909,10 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                 color="rgba(75, 192, 192, 1)"
                 yLabel="WETH/USD"
               />
-            )}
+            )} */}
+
+            {/* Uniswap Panel - 移動到這裡 */}
+            <UniswapPanel fund={fund} />
 
             {/* Fund Investment History */}
             <div className="card">
@@ -717,12 +988,12 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
                         <span className="text-gray-600">總贖回金額</span>
                         <span className="font-medium">${parseFloat(investmentSummary.totalRedeemed).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between">
+                      {/* <div className="flex justify-between">
                         <span className="text-gray-600">總收益</span>
                         <span className={`font-medium ${parseFloat(investmentSummary.totalReturn) >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
                           ${parseFloat(investmentSummary.totalReturn).toFixed(2)} ({investmentSummary.returnPercentage}%)
                         </span>
-                      </div>
+                      </div> */}
                     </div>
                   </>
                 )}
@@ -863,7 +1134,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               </div>
             </div>
 
-            <button
+            {/* <button
               className="w-full py-2 px-4 rounded-lg font-medium bg-primary-600 hover:bg-primary-700 text-white mt-4"
               disabled={!provider || !fund?.comptrollerProxy}
               onClick={async () => {
@@ -878,7 +1149,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               }}
             >
               結算績效費
-            </button>
+            </button> */}
 
             {/* Fund Statistics */}
             <div className="card">

@@ -30,8 +30,6 @@ export class FundService {
     const managementFeeAddress = '0x5c25D5d0C2cad652992bA417f8FA054F8930Ef99';
     const performanceFeeAddress = '0x82EDeB07c051D6461acD30c39b5762D9523CEf1C';
     const entranceRateDirectFeeAddress = '0xA7259E45c7Be47a5bED94EDc252FADB09769a326';
-    const allowedDepositRecipientsPolicyAddress = '0x1cF1fb97E6A4AfaA4167FA19d52AD19D6689C677';
-    const minMaxInvestmentAddress = '0xe0255c9f3B8e7DC07Cb460D09c713EA51f44feE2';
 
     // 以 Enzyme ManagementFee 合約為例
     const feeRecipient = "0x1cF1fb97E6A4AfaA4167FA19d52AD19D6689C677";
@@ -75,7 +73,7 @@ export class FundService {
     // ----------- 白名單策略設定 -----------
     // 以 Enzyme AllowedDepositRecipientsPolicy 合約為例
     const ALLOWED_DEPOSIT_RECIPIENTS_POLICY_ADDRESS = '0x0eD7E38C4535989e392843884326925B4469EB5A'; // 請換成你的
-    const whitelist = ["0x1cF1fb97E6A4AfaA4167FA19d52AD19D6689C677", "0xD97198d8A4BeB435DF06b1Dc81BA383c3fc85EE4"]; // 這裡填入白名單地址
+    const whitelist = ["0x984f6F3b1Dba353dc952C7A3a8E340B48A89C947"]; // 這裡填入白名單地址
 
     const listId = await this.createAddressList(whitelist);
     // encodeSettings: abi.encode(address[] allowedDepositRecipients)

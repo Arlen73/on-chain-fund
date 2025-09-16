@@ -151,7 +151,7 @@ export default function ManagerDashboard() {
 
         {/* 指標卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="card">
+          {/* <div className="card">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm text-gray-600">管理總資產 (AUM)</p>
@@ -159,7 +159,7 @@ export default function ManagerDashboard() {
                 <p className="text-sm text-success-600 mt-1">+2.5% 近24小時</p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="card">
             <div>
@@ -187,7 +187,7 @@ export default function ManagerDashboard() {
         </div>
 
         {/* Performance Charts Section */}
-        {selectedFund && (
+        {/* {selectedFund && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">基金表現詳情</h2>
@@ -253,7 +253,7 @@ export default function ManagerDashboard() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* 基金列表 */}
         <div className="card">
@@ -269,8 +269,8 @@ export default function ManagerDashboard() {
                   <th className="text-left py-3 px-4 font-medium text-gray-700">基金名稱</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">總資產 (AUM)</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-700">份額淨值 (NAV)</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">日漲跌</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">投資人數</th>
+                  {/* <th className="text-left py-3 px-4 font-medium text-gray-700">日漲跌</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">投資人數</th> */}
                   <th className="text-left py-3 px-4 font-medium text-gray-700">操作</th>
                 </tr>
               </thead>
@@ -302,13 +302,13 @@ export default function ManagerDashboard() {
                         )}
                       </td>
                       <td className="py-4 px-4 text-gray-900">{fund.sharePrice}</td>
-                      <td className={`py-4 px-4 font-medium ${fund.performanceColor}`}>
+                      {/* <td className={`py-4 px-4 font-medium ${fund.performanceColor}`}>
                         {fund.performance}
-                      </td>
-                      <td className="py-4 px-4 text-gray-900">{fund.investors.toLocaleString()}</td>
+                      </td> */}
+                      {/* <td className="py-4 px-4 text-gray-900">{fund.investors.toLocaleString()}</td> */}
                       <td className="py-4 px-4">
                         <div className="flex space-x-2">
-                          <button
+                          {/* <button
                             onClick={() => setSelectedFund(
                               selectedFund === fund.address ? null : fund.address
                             )}
@@ -319,7 +319,7 @@ export default function ManagerDashboard() {
                             }`}
                           >
                             {selectedFund === fund.address ? '隱藏圖表' : '查看圖表'}
-                          </button>
+                          </button> */}
                           <Link
                             href={`/manager/fund/${fund.id}`}
                             className="btn-primary text-sm"
