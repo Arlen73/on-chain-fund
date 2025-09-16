@@ -199,11 +199,11 @@ export default function ManagerDashboard() {
               </button>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* <PerformanceChart
+              <PerformanceChart
                 fundId={selectedFund}
                 fundName={funds.find(f => f.address === selectedFund)?.name}
                 height={300}
-              /> */}
+              />
               <div className="card">
                 <h3 className="font-semibold text-gray-900 mb-4">基金統計</h3>
                 {(() => {

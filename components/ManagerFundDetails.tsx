@@ -541,21 +541,21 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
     }
   };
 
-  async function settlePerformanceFee(comptrollerProxyAddress: string, signer: any) {
-    const performanceFeeAbi = [
-      "function settle(address _comptrollerProxy) external"
-    ];
-    const performanceFee = new ethers.Contract("0x82EDeB07c051D6461acD30c39b5762D9523CEf1C", performanceFeeAbi, signer);
-    try {
-      const tx = await performanceFee.settle(comptrollerProxyAddress);
-      await tx.wait();
-      console.log(`Performance fee settled for ${comptrollerProxyAddress}, tx: ${tx.hash}`);
-      return tx.hash;
-    } catch (error: any) {
-      console.error("Settle performance fee failed:", error);
-      throw error;
-    }
-  }
+  // async function settlePerformanceFee(comptrollerProxyAddress: string, signer: any) {
+  //   const performanceFeeAbi = [
+  //     "function settle(address _comptrollerProxy) external"
+  //   ];
+  //   const performanceFee = new ethers.Contract("0x82EDeB07c051D6461acD30c39b5762D9523CEf1C", performanceFeeAbi, signer);
+  //   try {
+  //     const tx = await performanceFee.settle(comptrollerProxyAddress);
+  //     await tx.wait();
+  //     console.log(`Performance fee settled for ${comptrollerProxyAddress}, tx: ${tx.hash}`);
+  //     return tx.hash;
+  //   } catch (error: any) {
+  //     console.error("Settle performance fee failed:", error);
+  //     throw error;
+  //   }
+  // }
 
   const handleRedeem = async () => {
     if (!provider || !address || !redeemAmount || !fund) return;
@@ -1134,7 +1134,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               </div>
             </div>
 
-            <button
+            {/* <button
               className="w-full py-2 px-4 rounded-lg font-medium bg-primary-600 hover:bg-primary-700 text-white mt-4"
               disabled={!provider || !fund?.comptrollerProxy}
               onClick={async () => {
@@ -1149,7 +1149,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               }}
             >
               結算績效費
-            </button>
+            </button> */}
 
             {/* Fund Statistics */}
             <div className="card">

@@ -229,7 +229,7 @@ export default function InvestorDashboard() {
         )}
 
         {/* Portfolio Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"> */}
           {/* <div className="card">
             <div className="flex justify-between items-start">
               <div>
@@ -272,7 +272,7 @@ export default function InvestorDashboard() {
             </div>
           </div> */}
 
-          <div className="card">
+          {/* <div className="card">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm text-gray-600">持有基金</p>
@@ -280,8 +280,8 @@ export default function InvestorDashboard() {
               </div>
               <div className="text-2xl">🏆</div>
             </div>
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
 
         {/* Quick Actions */}
         <div className="mb-8">
