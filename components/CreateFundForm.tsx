@@ -18,15 +18,18 @@ export default function CreateFundForm() {
     comptrollerProxy: string;
     txHash: string;
   } | null>(null);
+
   const [formData, setFormData] = useState({
     fundName: "",
     fundSymbol: "",
-    denominationAsset: DENOMINATION_ASSETS[0].address, // Use ASVT as default
-    managementFee: "2",
-    performanceFee: "10",
+    denominationAsset: DENOMINATION_ASSETS[0].address,
     enableWhitelist: false,
     whitelist: [],
+
+    entranceFeePercent: "1", // 以「百分比」輸入，例：1 代表 1%
+    entranceFeeRecipient: "", // 可空，空則用錢包地址
   });
+
   // ...原本的 useState 與 formData 之後，直接加在這裡
   const [enableWhitelist, setEnableWhitelist] = useState(false);
   const [whitelistInput, setWhitelistInput] = useState("");
@@ -78,15 +81,21 @@ export default function CreateFundForm() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const fundService = new FundService(provider);
 
+      const entranceFeeBps = formData.entranceFeePercent?.trim()
+        ? Math.max(0, Math.round(parseFloat(formData.entranceFeePercent) * 100))
+        : 0;
+
+      const entranceFeeRecipient =
+        formData.entranceFeeRecipient?.trim() || (address ?? undefined);
+
       const result = await fundService.createFund({
         fundName: formData.fundName,
         fundSymbol: formData.fundSymbol,
         denominationAsset: formData.denominationAsset,
-        managementFee: parseFloat(formData.managementFee),
-        performanceFee: parseFloat(formData.performanceFee),
-        // === 新增兩個參數 ===
         enableWhitelist,
         whitelist: enableWhitelist ? parsedWhitelist : [],
+        entranceFeeBps,
+        entranceFeeRecipient,
       });
 
       // 保存到 mock database (via API)
@@ -96,8 +105,6 @@ export default function CreateFundForm() {
         vaultProxy: result.vaultProxy,
         comptrollerProxy: result.comptrollerProxy,
         denominationAsset: formData.denominationAsset,
-        managementFee: parseFloat(formData.managementFee),
-        performanceFee: parseFloat(formData.performanceFee),
         creator: address!,
         txHash: result.txHash,
       });
@@ -127,10 +134,10 @@ export default function CreateFundForm() {
         fundName: "",
         fundSymbol: "",
         denominationAsset: DENOMINATION_ASSETS[0].address,
-        managementFee: "2",
-        performanceFee: "10",
         enableWhitelist: false,
         whitelist: [],
+        entranceFeePercent: "1", // 以「百分比」輸入，例：1 代表 1%
+        entranceFeeRecipient: "",
       });
 
       setCurrentStep(1);
@@ -148,10 +155,10 @@ export default function CreateFundForm() {
       fundName: "",
       fundSymbol: "",
       denominationAsset: DENOMINATION_ASSETS[0].address,
-      managementFee: "2",
-      performanceFee: "10",
       enableWhitelist: false,
       whitelist: [],
+      entranceFeePercent: "1", // 以「百分比」輸入，例：1 代表 1%
+      entranceFeeRecipient: "",
     });
     setCurrentStep(1);
   };
@@ -364,51 +371,55 @@ export default function CreateFundForm() {
       case 2:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">費用設定</h2>
-            <p className="text-gray-600">
-              設定基金管理費和績效費。費用將自動從基金資產中扣除。
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900">費用與白名單</h2>
+            <p className="text-gray-600">設定申購費（Entrance Fee）與可申購的白名單。</p>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                管理費 (年化%)
-              </label>
-              <input
-                type="number"
-                value={formData.managementFee}
-                onChange={(e) =>
-                  handleInputChange("managementFee", e.target.value)
-                }
-                placeholder="2"
-                min="0"
-                max="10"
-                step="0.1"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                年管理費率，通常在0-5%之間。
-              </p>
-            </div>
+            {/* 申購費（Entrance Fee） */}
+            <div className="border-t pt-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  申購費（%）
+                </label>
+                <input
+                  type="number"
+                  value={formData.entranceFeePercent}
+                  onChange={(e) =>
+                    handleInputChange("entranceFeePercent", e.target.value)
+                  }
+                  placeholder="1"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  投資人申購時收取的費率。留空以 0% 處理。
+                </p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                績效費 (%)
-              </label>
-              <input
-                type="number"
-                value={formData.performanceFee}
-                onChange={(e) =>
-                  handleInputChange("performanceFee", e.target.value)
-                }
-                placeholder="10"
-                min="0"
-                max="30"
-                step="1"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                當基金績效超過基準時收取的費用，通常在10-20%之間。
-              </p>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  申購費收款地址
+                </label>
+                <input
+                  type="text"
+                  value={formData.entranceFeeRecipient}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "entranceFeeRecipient",
+                      e.target.value.trim()
+                    )
+                  }
+                  placeholder="0x..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono"
+                />
+                {formData.entranceFeeRecipient &&
+                  !ethers.isAddress(formData.entranceFeeRecipient) && (
+                    <p className="text-sm text-danger-600 mt-1">
+                      地址格式不正確
+                    </p>
+                  )}
+              </div>
             </div>
 
             {/* --- 白名單設定：新增區塊（放在績效費輸入框之後） --- */}
@@ -481,16 +492,21 @@ export default function CreateFundForm() {
                     {selectedAsset?.symbol} - {selectedAsset?.name}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">管理費 (年化)</p>
-                  <p className="font-medium">{formData.managementFee}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">績效費</p>
-                  <p className="font-medium">{formData.performanceFee}%</p>
-                </div>
               </div>
             </div>
+            <div>
+              <p className="text-sm text-gray-600">申購費</p>
+              <p className="font-medium">
+                {formData.entranceFeePercent || "0"}%
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">申購費收款人</p>
+              <p className="font-medium">
+                {formData.entranceFeeRecipient || "(創建者地址)"}
+              </p>
+            </div>
+
             {/* --- 白名單設定：新增區塊（放在績效費輸入框之後） --- */}
             <div className="mt-6 border-t pt-6">
               <label className="flex items-center gap-2">
@@ -640,6 +656,8 @@ export default function CreateFundForm() {
                 isCreating ||
                 !formData.fundName ||
                 !formData.fundSymbol ||
+                (formData.entranceFeeRecipient &&
+                  !ethers.isAddress(formData.entranceFeeRecipient)) ||
                 (enableWhitelist &&
                   (parsedWhitelist.length === 0 || invalidWhitelist.length > 0))
               }

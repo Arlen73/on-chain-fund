@@ -38,11 +38,13 @@ export interface CreateFundParams {
   fundName: string;
   fundSymbol: string;
   denominationAsset: string;
-  managementFee?: number;
-  performanceFee?: number;
-  enableWhitelist?: boolean;
   whitelist?: string[];
+  enableWhitelist?: boolean;
+
+  entranceFeeBps?: number;         // 例：1% 就傳 100
+  entranceFeeRecipient?: string;   // 留空則預設為 signer address
 }
+
 
 export interface FundMetrics {
   totalAUM: string;
