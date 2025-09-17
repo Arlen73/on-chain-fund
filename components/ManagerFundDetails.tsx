@@ -841,14 +841,6 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">管理費</span>
-                  <span className="font-medium">{fund.managementFee}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">績效費</span>
-                  <span className="font-medium">{fund.performanceFee}%</span>
-                </div>
-                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">計價資產</span>
                   <span className="font-medium">{denominationAsset.symbol}</span>
                 </div>

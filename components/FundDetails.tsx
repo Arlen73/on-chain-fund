@@ -775,14 +775,6 @@ export default function FundDetails({ fundId }: FundDetailsProps) {
               
               <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">管理費</p>
-                  <p className="font-medium">{(fund.managementFee / 100).toFixed(1)}% / 年</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">績效費</p>
-                  <p className="font-medium">{(fund.performanceFee / 100).toFixed(1)}%</p>
-                </div>
-                <div>
                   <p className="text-gray-600">計價資產</p>
                   <p className="font-medium">{denominationAsset.symbol} - {denominationAsset.name}</p>
                 </div>

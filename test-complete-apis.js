@@ -8,8 +8,6 @@ const testFundData = {
   vaultProxy: '0x1234567890123456789012345678901234567890',
   comptrollerProxy: '0x9876543210987654321098765432109876543210',
   denominationAsset: '0xA0b86a33E6411a3CE6AE0dB93bE7c5b7C0Af5c90', // USDC
-  managementFee: 200, // 2%
-  performanceFee: 2000, // 20%
   creator: '0xTestCreatorAddress123456789012345678901234',
   txHash: '0xTestTxHash123456789012345678901234567890abcdef'
 };

@@ -22,8 +22,6 @@ interface ManagedFund {
   // 來自資料庫的額外資料
   comptrollerProxy?: string;
   denominationAsset?: string;
-  managementFee?: number;
-  performanceFee?: number;
   creator?: string;
   txHash?: string;
   status?: string;
@@ -67,8 +65,6 @@ export default function ManagerDashboard() {
           // 額外的資料庫資料
           comptrollerProxy: fund.comptrollerProxy,
           denominationAsset: fund.denominationAsset,
-          managementFee: fund.managementFee,
-          performanceFee: fund.performanceFee,
           creator: fund.creator,
           txHash: fund.txHash,
           status: fund.status

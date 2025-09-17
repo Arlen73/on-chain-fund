@@ -17,8 +17,6 @@ async function testInvestmentAPIs() {
       vaultProxy: '0x1111111111111111111111111111111111111111',
       comptrollerProxy: '0x2222222222222222222222222222222222222222',
       denominationAsset: '0xA0b86a33E6441f8C8c36e42a1c8E8c42D1E8eDD8',
-      managementFee: 2,
-      performanceFee: 10,
       creator: '0xtest123456789',
       txHash: '0xtestfundcreation'
     };

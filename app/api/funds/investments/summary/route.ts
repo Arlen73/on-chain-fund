@@ -1,10 +1,14 @@
+// app/api/funds/investments/summary/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '../../../../../lib/mock-database';
 
-// GET /api/funds/investments/summary - 獲取用戶投資總結
+export const dynamic = 'force-dynamic'; // <- opt out of SSG for this route
+export const revalidate = 0;            // <- no caching
+
+// GET /api/funds/investments/summary?fundId=...&investor=...
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const searchParams = request.nextUrl.searchParams; // (OK to keep, route is now dynamic)
     const fundId = searchParams.get('fundId');
     const investor = searchParams.get('investor');
 

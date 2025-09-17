@@ -30,8 +30,6 @@ async function testFundDetails() {
     console.log(`   創建者: ${testFund.creator}`);
     console.log(`   總資產: ${testFund.totalAssets || 'N/A'}`);
     console.log(`   份額價格: ${testFund.sharePrice || '1.00'}`);
-    console.log(`   管理費: ${testFund.managementFee} bps (${(testFund.managementFee / 100).toFixed(1)}%)`);
-    console.log(`   績效費: ${testFund.performanceFee} bps (${(testFund.performanceFee / 100).toFixed(1)}%)`);
     console.log(`   狀態: ${testFund.status}`);
     console.log(`   創建時間: ${new Date(testFund.createdAt).toLocaleDateString()}`);
     console.log('');

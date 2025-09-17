@@ -1,5 +1,7 @@
 import SwapForm from '@/components/SwapForm';
 import Navigation from '../../components/Navigation';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function SwapPage() {
   return (

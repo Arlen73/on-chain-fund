@@ -21,8 +21,6 @@ async function testDatabaseIntegration() {
       vaultProxy: '0x1234567890123456789012345678901234567890',
       comptrollerProxy: '0x0987654321098765432109876543210987654321',
       denominationAsset: '0xA0b86a33E6441f8C8c36e42a1c8E8c42D1E8eDD8',
-      managementFee: 2,
-      performanceFee: 10,
       creator: '0xtest123456789',
       txHash: '0xtesthash123456789'
     };

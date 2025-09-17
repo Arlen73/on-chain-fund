@@ -47,8 +47,6 @@ export async function POST(request: NextRequest) {
       vaultProxy,
       comptrollerProxy,
       denominationAsset,
-      managementFee,
-      performanceFee,
       creator,
       txHash
     } = body;
@@ -68,8 +66,6 @@ export async function POST(request: NextRequest) {
       vaultProxy,
       comptrollerProxy,
       denominationAsset,
-      managementFee,
-      performanceFee,
       creator,
       txHash
     });
