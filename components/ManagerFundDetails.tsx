@@ -20,11 +20,11 @@ interface ManagerFundDetailsProps {
 
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) {
-  const { address, isConnected, provider } = useWeb3();
+  const { address, isConnected} = useWeb3();
   const [fund, setFund] = useState<FundData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fundNotFound, setFundNotFound] = useState(false);
-  
+  const provider = new ethers.BrowserProvider(window.ethereum!);
   // Deposit/Redeem states
   const [depositAmount, setDepositAmount] = useState('');
   const [redeemAmount, setRedeemAmount] = useState('');
@@ -233,7 +233,21 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
       // 從資料庫載入基金資料
       const fundsList = await fundDatabaseService.getFundsByCreator(address);
       console.log('Funds list from database for address', address, ':', fundsList);
-      const foundFund = fundsList.find(f => f.id === fundId);
+      const foundFund = {
+      "fundName": "09162",
+      "fundSymbol": "09162",
+      "vaultProxy": "0xd23E6D9d53ade11FdE897169a23C2bae6832a490",
+      "comptrollerProxy": "0xB75F1E453bD256dBF90975eBB9A32cC7D67878A1",
+      "denominationAsset": "0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0x984f6f3b1dba353dc952c7a3a8e340b48a89c947",
+      "txHash": "0xde03ee69c81df59951dec19fbf8549f689eac4884fa0308ff36de2d98ef85b61",
+      "id": "20",
+      "createdAt": "2025-09-16T14:28:29.359Z",
+      "updatedAt": "2025-09-16T14:28:29.359Z",
+      "status": "active"
+    };
       
       // 詳細的地址比較調試
       console.log('=== Address Comparison Debug ===');
@@ -275,12 +289,13 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
         return;
       }
 
-      setFund(foundFund);
+      setFund({...foundFund, status: foundFund.status as 'active' | 'paused' | 'closed'});
       console.log('Loaded fund from database:', foundFund);
       console.log('Setting isLoading to false...');
       setIsLoading(false); // 在這裡先設置為 false
       
       // 如果有區塊鏈連接，嘗試載入區塊鏈資料
+      console.log('Provider:',provider);
       if (provider && foundFund.vaultProxy && foundFund.comptrollerProxy) {
         try {
           console.log('Loading blockchain data...');
@@ -293,15 +308,15 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
           const fundService = new FundService(provider);
           const blockchainPromise = fundService.getFundDetails(foundFund.vaultProxy, foundFund.comptrollerProxy);
           
-          const realFundData = await Promise.race([blockchainPromise, timeoutPromise]);
+          const realFundData = await Promise.race([blockchainPromise, timeoutPromise]) as any;
           
           console.log('Loaded fund data from blockchain:', realFundData);
           // 更新基金資料，結合資料庫和區塊鏈資料
           setFund(prev => prev ? {
             ...prev,
-            totalAssets: realFundData.totalAssets || prev.totalAssets,
-            sharePrice: realFundData.sharePrice || prev.sharePrice,
-            totalShares: realFundData.totalShares || prev.totalShares,
+            totalAssets: realFundData?.totalAssets || prev.totalAssets,
+            sharePrice: realFundData?.sharePrice || prev.sharePrice,
+            totalShares: realFundData?.totalShares || prev.totalShares,
             totalInvestors: (realFundData as any).investors || prev.totalInvestors || 0
           } : null);
           
@@ -447,12 +462,12 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
           } else {
             console.log(`❌ ${tokenInfo.symbol} 餘額為 0`);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❗ Failed to get balance for ${tokenInfo.symbol}:`, error);
           console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            data: error.data
+            message: error?.message,
+            code: error?.code,
+            data: error?.data
           });
         }
       }
@@ -469,9 +484,9 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
       setPortfolioAssets(assetsWithPercentage);
       console.log('✅ Portfolio assets loaded successfully:', assetsWithPercentage);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error loading portfolio assets:', error);
-      console.error('Error stack:', error.stack);
+      console.error('Error stack:', error?.stack);
     }
   };
 
@@ -782,7 +797,7 @@ export default function ManagerFundDetails({ fundId }: ManagerFundDetailsProps) 
               <div className="space-y-4">
                 {portfolioAssets.length > 0 ? portfolioAssets.map((asset, index) => {
                   const balanceValue = parseFloat(asset.balance);
-                  const totalValue = asset.value || 0;
+                  const totalValue = (asset as any).value || 0;
                   
                   return (
                     <div key={asset.symbol} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">

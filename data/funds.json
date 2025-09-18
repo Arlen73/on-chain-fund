@@ -256,6 +256,51 @@
       "createdAt": "2025-09-09T12:54:53.500Z",
       "updatedAt": "2025-09-09T12:54:53.500Z",
       "status": "active"
+    },
+    {
+      "fundName": "RRR",
+      "fundSymbol": "RRR",
+      "vaultProxy": "0xC4d6611E8e65F6b91Fdb182964A822B26daDdFc5",
+      "comptrollerProxy": "0x167C5DE61874f8A3927A1dE7Eb732d7854B71f4b",
+      "denominationAsset": "0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0x984f6f3b1dba353dc952c7a3a8e340b48a89c947",
+      "txHash": "0x64986e7b08ea6a85886f84bc487a8f57aff322550d5842fd7b77fed451d268ff",
+      "id": "19",
+      "createdAt": "2025-09-16T15:48:26.948Z",
+      "updatedAt": "2025-09-16T15:48:26.948Z",
+      "status": "active"
+    },
+    {
+      "fundName": "testset",
+      "fundSymbol": "TESTSET",
+      "vaultProxy": "0x8511bbCa03f518b1AD4dc86847F2aA7Bb523cE54",
+      "comptrollerProxy": "0x40f6a0687124e863d54a873AAB5D4d35cd5aCe96",
+      "denominationAsset": "0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0x7baee1710144941efb3bfacdf3f46a3bc3ef0c08",
+      "txHash": "0xb1df8b3e62bc1e350b3f1302ed572d0c18b4a8892e3e72a080ff2312827f485c",
+      "id": "20",
+      "createdAt": "2025-09-16T15:51:50.189Z",
+      "updatedAt": "2025-09-16T15:51:50.189Z",
+      "status": "active"
+    },
+    {
+      "fundName": "0918test",
+      "fundSymbol": "0918TEST",
+      "vaultProxy": "0x0995306aD2BC251a49D6950beB70931DF582CeD9",
+      "comptrollerProxy": "0x8f8Ed45a0099227c93D880A5D3835C5BB8c6E4F5",
+      "denominationAsset": "0x932b08d5553b7431FB579cF27565c7Cd2d4b8fE0",
+      "managementFee": 2,
+      "performanceFee": 10,
+      "creator": "0x984f6f3b1dba353dc952c7a3a8e340b48a89c947",
+      "txHash": "0x3fedc9be53a3fd6bbd5481e423fc1d838f4b556921cd313b319bbccceaf77b09",
+      "id": "21",
+      "createdAt": "2025-09-18T11:48:42.792Z",
+      "updatedAt": "2025-09-18T11:48:42.792Z",
+      "status": "active"
     }
   ],
   "investments": [
@@ -832,8 +877,36 @@
       "txHash": "0xbc3e34ca6cb6729131c57f7d15830c8c565d484d55246bb4dcb55aaca32310e4",
       "timestamp": "2025-09-12T13:58:18.481Z",
       "status": "completed"
+    },
+    {
+      "id": "43",
+      "fundId": "20",
+      "fundName": "testset",
+      "fundSymbol": "TESTSET",
+      "investorAddress": "0x984f6f3b1dba353dc952c7a3a8e340b48a89c947",
+      "type": "redeem",
+      "amount": "990",
+      "shares": "990.0",
+      "sharePrice": "1.0",
+      "txHash": "0xc51780d23e725c8608bbf462f6ac26387e26fafb405722ec465ecfb575f4c45a",
+      "timestamp": "2025-09-16T16:34:54.758Z",
+      "status": "completed"
+    },
+    {
+      "id": "44",
+      "fundId": "21",
+      "fundName": "0918test",
+      "fundSymbol": "0918TEST",
+      "investorAddress": "0x984f6f3b1dba353dc952c7a3a8e340b48a89c947",
+      "type": "deposit",
+      "amount": "10000",
+      "shares": "10000",
+      "sharePrice": "1.0000",
+      "txHash": "0xaa518efe3ad5c327a792315293d98cbbea7341e7dc4200990af366fa562f6214",
+      "timestamp": "2025-09-18T11:52:29.357Z",
+      "status": "completed"
     }
   ],
-  "lastFundId": 18,
-  "lastInvestmentId": 42
+  "lastFundId": 21,
+  "lastInvestmentId": 44
 }

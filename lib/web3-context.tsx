@@ -46,16 +46,16 @@ export function Web3Provider({ children }: Web3ProviderProps) {
     if (typeof window !== 'undefined' && window.ethereum) {
       try {
         const provider = new BrowserProvider(window.ethereum);
-        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+        //const accounts = await window.ethereum.request({ method: "eth_accounts" });
 
         // 要先授權過後才可以使用其他帳號轉換 不然只會卡在第一個
-        // const accounts = await window.ethereum.request({ method: "wallet_requestPermissions",
-        //         params: [
-        //         {
-        //             eth_accounts: {},
-        //         },
-        //         ],
-        // });
+        const accounts = await window.ethereum.request({ method: "wallet_requestPermissions",
+                params: [
+                {
+                    eth_accounts: {},
+                },
+                ],
+        });
 
         if (accounts.length > 0) {
           setProvider(provider);

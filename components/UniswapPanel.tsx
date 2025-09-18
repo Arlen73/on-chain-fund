@@ -41,8 +41,8 @@ interface PoolReserves {
 }
 
 export default function UniswapPanel({ fund }: UniswapPanelProps) {
-  const { address, provider } = useWeb3();
-  
+  // const { address } = useWeb3(); // 暫時註解掉未使用的變數
+  const provider = new ethers.BrowserProvider(window.ethereum!);
   const [fromAmount, setFromAmount] = useState('');
   const [minAmountOut, setMinAmountOut] = useState('');
   const [fromToken, setFromToken] = useState<'ASVT' | 'WETH'>('ASVT');
@@ -58,7 +58,7 @@ export default function UniswapPanel({ fund }: UniswapPanelProps) {
     
     try {
       console.log('🔍 開始獲取 Pool 和 Vault 資訊...');
-      
+      console.log('Provider:', provider);
       // 獲取 Pool 資訊
       const poolAbi = [
         'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
@@ -67,11 +67,13 @@ export default function UniswapPanel({ fund }: UniswapPanelProps) {
       ];
       
       const poolContract = new ethers.Contract(POOL_ADDRESS, poolAbi, provider);
+      console.log('Provider:', provider);
+      console.log('hi');
       const [reserves, token0] = await Promise.all([
         poolContract.getReserves(),
         poolContract.token0()
       ]);
-      
+      console.log('hi');
       let asvtReserve: number, wethReserve: number;
       if (token0.toLowerCase() === TOKEN_ADDRESSES.ASVT.toLowerCase()) {
         asvtReserve = parseFloat(ethers.formatUnits(reserves[0], 18));
@@ -80,7 +82,7 @@ export default function UniswapPanel({ fund }: UniswapPanelProps) {
         asvtReserve = parseFloat(ethers.formatUnits(reserves[1], 18));
         wethReserve = parseFloat(ethers.formatUnits(reserves[0], 18));
       }
-      
+      console.log('hi');
       // 計算匯率
       const asvtToWethRate = wethReserve / asvtReserve;
       const wethToAsvtRate = asvtReserve / wethReserve;
