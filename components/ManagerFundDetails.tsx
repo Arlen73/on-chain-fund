@@ -36,6 +36,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { SEPOLIA_MAINNET_RPC } from "@/lib/constant";
 import FundLineChart from "./FundLineChart";
+import UniswapPanel from './UniswapPanel';
 
 interface ManagerFundDetailsProps {
   fundId: string;
@@ -1174,6 +1175,9 @@ export default function ManagerFundDetails({
                 title="Share Price Over Time"
               />
             </div>
+
+            {/* Uniswap Panel - 移動到這裡 */}
+            <UniswapPanel fund={fund} />
 
             {/* Fund Investment History */}
             <div className="card">
