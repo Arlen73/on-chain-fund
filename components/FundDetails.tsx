@@ -191,7 +191,7 @@ export default function FundDetails({ fundId }: FundDetailsProps) {
       console.error('Approval failed:', error);
       showErrorNotification(
         '授權失敗',
-        error.message || '授權過程中發生錯誤，請稍後重試'
+        '授權過程中發生錯誤，請稍後重試'
       );
     } finally {
       setIsApproving(false);
