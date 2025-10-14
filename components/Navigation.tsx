@@ -29,11 +29,11 @@ export default function Navigation() {
                   經理人儀表板
                 </Link>
               )}
-              {isConnected && (
+              {/* {isConnected && (
                 <Link href="/swap" className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium">
                   Swap
                 </Link>
-              )}
+              )} */}
             </div>
           </div>
 

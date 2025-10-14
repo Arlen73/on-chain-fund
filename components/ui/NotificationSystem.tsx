@@ -35,7 +35,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       id,
       timestamp: Date.now(),
       autoHide: notificationData.autoHide ?? true,
-      duration: notificationData.duration ?? 5000
+      duration: notificationData.duration ?? 100
     };
 
     setNotifications(prev => [notification, ...prev]);
@@ -43,7 +43,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Auto-remove notification after duration
     if (notification.autoHide) {
       setTimeout(() => {
-        removeNotification(id);
+        setNotifications(prev => prev.filter(n => n.id !== id));
       }, notification.duration);
     }
 
@@ -80,7 +80,7 @@ export function useNotifications() {
 
 export function NotificationContainer() {
   const { notifications, removeNotification } = useNotifications();
-
+  
   if (notifications.length === 0) return null;
 
   return (
@@ -144,6 +144,7 @@ function NotificationCard({
           <p className="text-sm mt-1 opacity-90">{notification.message}</p>
           {notification.action && (
             <button
+              type="button"
               onClick={notification.action.onClick}
               className="mt-2 text-xs font-medium underline hover:no-underline"
             >
@@ -152,8 +153,10 @@ function NotificationCard({
           )}
         </div>
         <button
+          type="button"
           onClick={onRemove}
-          className="ml-4 text-gray-400 hover:text-gray-600"
+          className="ml-4 text-gray-400 hover:text-gray-600 cursor-pointer focus:outline-none"
+          aria-label="關閉通知"
         >
           ✕
         </button>
@@ -185,7 +188,8 @@ export function useErrorNotification() {
       title,
       message,
       action,
-      autoHide: false // Errors stay until manually dismissed
+      autoHide: true, // 改為自動隱藏
+      duration: 8000 // 8秒後自動關閉（比成功訊息長一點）
     });
   }, [addNotification]);
 }
@@ -199,7 +203,7 @@ export function useTransactionNotification() {
     amount?: string,
     fundName?: string
   ) => {
-    let title, message, notificationType: Notification['type'];
+    let title: string, message: string, notificationType: Notification['type'];
     
     switch (type) {
       case 'pending':
